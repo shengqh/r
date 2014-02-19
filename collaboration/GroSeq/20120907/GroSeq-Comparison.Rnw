@@ -1,0 +1,93 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\textbf{GRO-seq analysis - Pausing Index Comparison}
+
+<<echo=FALSE>>=
+getPausingData<-function(data, breaks, pvalue){
+  wtall<-subset(data, data[,10] < 100)
+  wtall<-subset(wtall, wtall[,10] > 0)
+  wtalldata<-wtall[,10]
+  wtallhist<-hist(wtalldata,breaks=breaks,plot=FALSE)
+  
+  wtsig<-subset(data, data[,20] < pvalue)
+  wtsig<-subset(wtsig, wtsig[,10] < 100)
+  wtsig<-subset(wtsig, wtsig[,10] > 0)
+  wtsigdata<-wtsig[,10]
+  wtsighist<-hist(wtsigdata,breaks=breaks,plot=FALSE)
+  
+  wtdata<-list(alldata=wtalldata,allhist=wtallhist,sigdata=wtsigdata,sighist=wtsighist);
+  
+  nullall<-subset(data, data[,19] < 100)
+  nullall<-subset(nullall, nullall[,19] > 0)
+  nullalldata<-nullall[,19]
+  nullallhist<-hist(nullalldata,breaks=breaks,plot=FALSE)
+  
+  nullsig<-subset(data, data[,21] < pvalue)
+  nullsig<-subset(nullsig, nullsig[,19] < 100)
+  nullsig<-subset(nullsig, nullsig[,19] > 0)
+  nullsigdata<-nullsig[,19]
+  nullsighist<-hist(nullsigdata,breaks=breaks,plot=FALSE)
+
+  nulldata<-list(alldata=nullalldata,allhist=nullallhist,sigdata=nullsigdata,sighist=nullsighist);
+
+  result<-list(wtdata=wtdata, nulldata=nulldata)
+  
+  return (result)
+}
+
+@
+  
+<<read_pausing, echo=FALSE, cache=FALSE>>=
+mydir<-"D:/Sync/Dropbox/GroSeq/20120907/";
+
+files<-c("MTG8-gro-uniq-mapped_promoter50bp-count-fdr.csv","HDAC3-gro-uniq-mapped_promoter50bp-count-fdr.csv")
+
+names<-c("WT","CTRL")
+
+dsnames<-c("MTF8","HDAC3")
+
+for(i in 1:length(files)){
+data<-read.csv(paste0(mydir, files[i]))
+
+breaks=c(0:100)
+
+fdata<-getPausingData(data, breaks, 0.01)
+
+wtdata<-fdata$wtdata;
+nulldata<-fdata$nulldata;
+
+maxCount<-max(wtdata$allhist$counts, 
+              nulldata$allhist$counts)
+
+legends<-c(paste0(names[i], "-Allgenes"),paste0(names[i],"-Significantly paused (fdr < 0.05)"),
+           "Null-Allgenes","Null-Significantly paused (fdr < 0.05)")
+
+colors<-c("black","red","blue", "green", "yellow")
+
+plot(0,xlim=c(0,100),ylim=c(0,maxCount),type="n",xlab="Pausing Index",ylab="Number of genes",main=paste0(dsnames[i], " Pausing Index Distribution"));
+
+lines(wtdata$allhist$breaks[2:length(wtdata$allhist$breaks)],wtdata$allhist$counts,col=colors[1],lwd=2);
+hist(wtdata$sigdata, breaks=breaks, col=colors[2], add=TRUE);
+lines(nulldata$allhist$breaks[2:length(nulldata$allhist$breaks)],nulldata$allhist$counts,col=colors[3],lwd=2);
+hist(nulldata$sigdata, breaks=breaks, col=colors[4], add=TRUE);
+
+overlap = wtdata$sighist;
+  for(i in 1:length(overlap$counts)){ 
+    if(wtdata$sighist$counts[i] > 0 & nulldata$sighist$counts[i] > 0){
+      overlap$counts[i] = min(wtdata$sighist$counts[i],nulldata$sighist$counts[i])
+    } else {
+      overlap$counts[i] = 0
+    }
+  }
+plot(overlap,color=colors[5],add=TRUE)
+
+
+legend("topright",maxCount,legend=legends,lty=1,col=colors);
+}
+
+@
+
+\end{document}

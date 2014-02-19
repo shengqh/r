@@ -1,0 +1,9 @@
+Package: cqs
+Type: Package
+Title: R Code for CQS
+Version: 1.0
+Date: 2012-10-19
+Author: Quanhu SHENG
+Maintainer: Quanhu SHENG <shengqh@gmail.com>
+Description: Currently for cluster analysis
+License: GPL-2
