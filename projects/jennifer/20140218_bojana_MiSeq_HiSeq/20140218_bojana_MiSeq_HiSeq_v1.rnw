@@ -43,37 +43,55 @@ print(xtable(sampleinfo, caption = "Sample Information", label = "tab:sample"), 
 @
 
 \section{Raw file quality control}
-FastQC v0.10.1 was used. Two GC content bias were observed:
+FastQC v0.10.1 was used. No adapter was found. Two GC content bias were observed:
 \begin{enumerate}
-\item The GC contribution of HiSeq data were shifted to 0.4
-\item There are a lot of reads in MiSeq have no GC which means they might be all 'N'.
+\item The GC contribution of HiSeq data was shifted to 0.4, which was caused by a 'N' in 3' of each reads.
+\item There are a lot of reads in MiSeq have no GC, which was caused by the reads whose sequence was all 'N'.
 \end{enumerate}
 \includepdf[pages={1-12}, width=\linewidth, height=90mm, nup=1x2]{20140218_bojana_MiSeq_HiSeq_FastQC.pdf}
 
 \section{Mapping}
-TopHat v2.0.9 was used to map reads to human genome 19. HTSeq v0.5.4p3 was used to count genes.\\
+TopHat v2.0.9 was used to map reads to human genome 19. \\
 
 \framebox{\begin{minipage}[t]{1\columnwidth}%
-tophat2 --segment-length 25 -r 0 -p 8 --keep-fasta-order --no-coverage-search
---rg-id HiSeqSample1 --rg-sample HiSeqSample1 --rg-library HiSeqSample1
--G Homo\_sapiens.GRCh37.73.gtf --transcriptome-index=hg19\_GRCh37\_73
--o . bowtie2\_index/hg19 2059-JP-6\_1.fastq.gz 2059-JP-6\_2.fastq.gz\\
+tophat2 --segment-length 25 -r 0 -p 8 --keep-fasta-order --no-coverage-search \textbackslash{}
+
+\qquad{}--rg-id HiSeqSample1 --rg-sample HiSeqSample1 --rg-library HiSeqSample1 \textbackslash{}
+
+\qquad{}-G Homo\_sapiens.GRCh37.73.gtf --transcriptome-index=hg19\_GRCh37\_73 \textbackslash{}
+
+\qquad{}-o . bowtie2\_index/hg19 2059-JP-6\_1.fastq.gz 2059-JP-6\_2.fastq.gz\\
 
 mv accepted\_hits.bam HiSeqSample1.bam\\
-
-mv accepted\_hits.bam.bai HiSeqSample1.bam.bai\\
-
-samtools sort -n -@ 8 HiSeqSample1.bam HiSeqSample1.sortedname\\
-
-samtools view HiSeqSample1.sortedname.bam | htseq-count -q -m intersection-nonempty
--s no -i gene\_id - Homo\_sapiens.GRCh37.73.gtf > HiSeqSample1.count%
+\\
+mv accepted\_hits.bam.bai HiSeqSample1.bam.bai
 \end{minipage}}
+\newline
+\newline
+\newline
+The mapping quality was summerized as table \ref{tab:untrim}.\\
+<<pretrim, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, results='asis', cache=TRUE>>=
+library(xtable)
+data<-read.table("H:/shengquanhu/projects/Jennifer/20140218_bojana_MiSeq_HiSeq/untrimmed.tsv", header=T, row.names=1, check.names=F)
+colnames(data)<-c("LeftReads","LMapped","LRate","LMulti","RightReads","RMapped","RRate","RMulti","Overall","AlignedPairs","AMulti","ADiscordant")
+rownames(data)<-c(paste0("HiSeq", c(1:3)), paste0("MiSeq", c(1:3)))
+print(xtable(data[,c(1,2,3,5,6,7,10,12)], caption = "Mapping summary of untrimmed reads", label = "tab:untrim"), include.rownames=T, caption.placement="top", table.placement="!h")
+@
 
-\section{Correlation between MiSeq and HiSeq}
+\section{Counting genes}
+HTSeq v0.5.4p3 was used to count genes.\\
+
+\framebox{\begin{minipage}[t]{1\columnwidth}%
+samtools sort -n -@ 8 HiSeqSample1.bam HiSeqSample1.sortedname\\
+\\
+samtools view HiSeqSample1.sortedname.bam \textbar{} htseq-count -q -m intersection-nonempty \textbackslash{}
+
+\qquad{}-s no -i gene\_id - Homo\_sapiens.GRCh37.73.gtf \textgreater HiSeqSample1.count%
+\end{minipage}}
+\section{Correlation of count between MiSeq and HiSeq}
 Spearman correlation was calculated between MiSeq gene count and HiSeq gene count for each sample (table \ref{tab:spcorr}).
-<<Correlation, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, results='asis', cache=TRUE>>=
-setwd("H:/shengquanhu/projects/Jennifer/20140218_bojana_MiSeq_HiSeq/genetable/result")
-data<-read.table("20140218_bojana_MiSeq_HiSeq_gene.count", header=T, row.names=1, check.names=F)
+<<countcorr, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, results='asis', cache=TRUE>>=
+data<-read.table("H:/shengquanhu/projects/Jennifer/20140218_bojana_MiSeq_HiSeq/genetable/result/20140218_bojana_MiSeq_HiSeq_gene.count", header=T, row.names=1, check.names=F)
 countdata<-data[,c(2:7)]
 x<-1
 spcorr<-lapply(c(1:3), function(x){
@@ -84,17 +102,55 @@ spcorr<-lapply(c(1:3), function(x){
 })
 
 sptable<-data.frame(sample = paste0("Sample", c(1:3)), spcorr = unlist(spcorr))
-print(xtable(sptable, caption = "Spearman Correlation", label = "tab:spcorr"), include.rownames=F, caption.placement="top", table.placement="!h")
+print(xtable(sptable, caption = "Spearman Correlation of Count between MiSeq and HiSeq", label = "tab:spcorr"), include.rownames=F, caption.placement="top", table.placement="!ht")
 @
+
+
+\section{FPKM of genes}
+Cuffdiff v2.1.1 were used to estimate gene FPKM value. In-house software cqstools was used to extract FPKM values.\\
+\framebox{\begin{minipage}[t]{1\columnwidth}%
+cuffdiff -p 8 -u -N -o . -L MiSeq,HiSeq -b hg19\_chr.fa Homo\_sapiens.GRCh37.73.gtf \textbackslash{}
+
+\qquad{}MiSeqSample1.bam,MiSeqSample2.bam,MiSeqSample3.bam \textbackslash{}
+
+\qquad{}HiSeqSample1.bam,HiSeqSample2.bam,HiSeqSample3.bam \\
+
+cqstools cuffdiff\_count -i genes.read\_group\_tracking -s gene\_exp.diff  \textbackslash{}
+
+\qquad{}-m 20140218\_bojana\_MiSeq\_HiSeq\_group\_sample.map -o untrim\_cuffdiff%
+
+\end{minipage}}
+
+\section{Correlation of FPKM between MiSeq and HiSeq}
+Spearman correlation was calculated between MiSeq gene FPKM and HiSeq gene FPKM for each sample (table \ref{tab:spcorrfpkm}).
+<<FPMKCorr, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, results='asis', cache=TRUE>>=
+data<-read.table("H:/shengquanhu/projects/Jennifer/20140218_bojana_MiSeq_HiSeq/untrim_cuffdiff.fpkm", header=T, row.names=1, check.names=F)
+countdata<-data[,c(3:8)]
+x<-1
+spcorr<-lapply(c(1:3), function(x){
+  cdata<-cbind(countdata[,x], countdata[,x+3])
+  cdata<-cdata[rowSums(cdata)>0,]
+  cr<-cor.test(cdata[,1], cdata[,2], method="spearman")
+  cr$estimate
+})
+
+sptable<-data.frame(sample = paste0("Sample", c(1:3)), spcorr = unlist(spcorr))
+print(xtable(sptable, caption = "Spearman Correlation of FPKM between MiSeq and HiSeq", label = "tab:spcorrfpkm"), include.rownames=F, caption.placement="top", table.placement="!ht")
+@
+
 \newpage
 \section{Heatmap}
+Variance stabilizing transformed (VST) value were calculated by DESeq2 from raw count. The 500 genes with largest interquartile range (IQR) of VST value were selected for drawimg heatmap.\\
+\\
 Based on heatmap, the MiSeq and HiSeq data from sample 3 were clustered together as we expected. The spearman correlation coefficient of sample 3 (0.86) between MiSeq and HiSeq was also higher than sample 1 and 2 (0.72 and 0.75).\\
 \includegraphics[width=\linewidth]{H:/shengquanhu/projects/Jennifer/20140218_bojana_MiSeq_HiSeq/deseq2/result/HiSeq_vs_MiSeq_DESeq2-vsd-heatmap}%
 
+\newpage
 \section{PCA}
-Based on PCA image, the MiSeq and HiSeq data from sample 3 were also more similar than the data from sample 1 and 2.\\
+The VST values of all genes were used in PCA analysis. Based on PCA image, the MiSeq and HiSeq data from sample 3 were also more similar than the data from sample 1 and 2.\\
 \includegraphics[width=\linewidth]{H:/shengquanhu/projects/Jennifer/20140218_bojana_MiSeq_HiSeq/deseq2/result/HiSeq_vs_MiSeq_DESeq2-vsd-pca}%
 
+\newpage
 \section{Differential expression comparison}
 Ideally, there should be no difference between MiSeq and HiSeq paired data. But actually, DESeq2 detected 6156 genes differential expressed with adjust pvalue less than 0.05.
 
