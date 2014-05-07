@@ -1,4 +1,4 @@
-
+setwd("e:/temp")
 
 
 library(hgu133plus2.db)
@@ -8,9 +8,9 @@ library(survival)
 library(multtest)
 library(GEOquery)
 
-## aa<-getGEO("GSE39582")
-## GSE39582<-aa
-## save(GSE39582, file="GSE39582.RData")
+aa<-getGEO("GSE39582")
+GSE39582<-aa
+save(GSE39582, file="GSE39582.RData")
 load("GSE39582.RData")
 pinfo<-pData(phenoData(GSE39582[[1]]))
 
@@ -64,9 +64,9 @@ head(res)
 bh<-mt.rawp2adjp(res[,5], "BH")
 adjustedP<-bh$adjp[order(bh$index),]
 
-res<-data.frame(res, adjustedP)
-res<-res[,-6]
-res<-data.frame(res, anno$geneSymbol)
+res2<-data.frame(res, adjustedP)
+res2<-res2[,-6]
+res3<-data.frame(res3, anno$geneSymbol)
 
-write.csv(res, "stage23.csv")
+write.csv(res3, "stage23.csv")
 
