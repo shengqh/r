@@ -23,7 +23,12 @@ rm(batchExpr)
 
 #find power
 powers = c(1:10)
-sft = pickSoftThreshold(wdata, powerVector = powers, verbose = 5)[[2]]
+
+pst <- pickSoftThreshold(wdata, powerVector = powers, verbose = 5)
+
+powertolerance=pst$powerEstimate
+
+sft<-pst$fitIndices
 
 png(paste0(wname, ".findpower.png"), width=4000, height=3000,res=300)
 
@@ -45,21 +50,22 @@ text(sft[,1], sft[,5], labels=powers, cex=cex1,col="red")
 
 dev.off()
 
-#based on the image, 7 is the power
-powertolerance=7
-
 tomfile<-paste0(wname, ".TOM")
-net = blockwiseModules(wdata, power = powertolerance,
+net = blockwiseModules(wdata, 
+                       power = powertolerance,
+                       TOMType = "unsigned",
+                       mergeCutHeight = 0.25,
+                       pamRespectsDendro = FALSE,
                        saveTOMs = FALSE,
                        verbose = 7)
 
+table(net$colors)
+
 # Convert labels to colors for plotting
-moduleLabels = net$colors
-moduleColors = labels2colors(moduleLabels)
+moduleColors = net$colors
 
 colors<-unique(as.character(moduleColors))
 save(colors, file=paste0(wname, ".colors.RData"))
-
 
 # Plot the dendrogram and the module colors underneath
 png(paste0(wname, ".cluster.png"), width=4000, height=3000,res=300)

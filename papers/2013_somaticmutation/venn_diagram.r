@@ -1,5 +1,7 @@
 library("VennDiagram")
 
+setwd("H:/shengquanhu/projects/somaticmutation/")
+
 getintersect<-function(data, names){
   result<-data
   lapply(names, function(name){
@@ -9,58 +11,61 @@ getintersect<-function(data, names){
 }
 
 drawvenn<-function(data, cnames){
-  draw.quad.venn(getintersect(matched, cnames[1]),
-                 getintersect(matched, cnames[2]),
-                 getintersect(matched, cnames[3]),
-                 getintersect(matched, cnames[4]),
+  plot.new()
+  draw.quad.venn(getintersect(data, cnames[1]),
+                 getintersect(data, cnames[2]),
+                 getintersect(data, cnames[3]),
+                 getintersect(data, cnames[4]),
                  
-                 getintersect(matched, cnames[c(1:2)]),
-                 getintersect(matched, cnames[c(1,3)]),
-                 getintersect(matched, cnames[c(1,4)]),
-                 getintersect(matched, cnames[c(2,3)]),
-                 getintersect(matched, cnames[c(2,4)]),
-                 getintersect(matched, cnames[c(3,4)]),
+                 getintersect(data, cnames[c(1:2)]),
+                 getintersect(data, cnames[c(1,3)]),
+                 getintersect(data, cnames[c(1,4)]),
+                 getintersect(data, cnames[c(2,3)]),
+                 getintersect(data, cnames[c(2,4)]),
+                 getintersect(data, cnames[c(3,4)]),
 
-                 getintersect(matched, cnames[c(1,2,3)]),
-                 getintersect(matched, cnames[c(1,2,4)]),
-                 getintersect(matched, cnames[c(1,3,4)]),
-                 getintersect(matched, cnames[c(2,3,4)]),
+                 getintersect(data, cnames[c(1,2,3)]),
+                 getintersect(data, cnames[c(1,2,4)]),
+                 getintersect(data, cnames[c(1,3,4)]),
+                 getintersect(data, cnames[c(2,3,4)]),
                  
-                 getintersect(matched, cnames[c(1,2,3,4)]),
+                 getintersect(data, cnames[c(1,2,3,4)]),
                  
                  category=cnames
   )
 }
 
-matched<-read.table("H:/shengquanhu/projects/somaticmutation/all_muTect_varscan2_rsmc.site.tsv",sep='\t',header=T)
+calculateTable<-function(data, cnames){
+  refcount<-getintersect(data, cnames[1])
+  res<-matrix(unlist(lapply(c(2:length(cnames)), function(i){
+    methodcount<-getintersect(data, cnames[i])
+    overlapcount<-getintersect(data, cnames[c(1,i)])
+    c(refcount, methodcount, overlapcount, overlapcount / refcount, overlapcount / methodcount)
+  })), ncol=5, byrow=TRUE)
+  colnames(res)<-c(cnames[1], "Count", "OverlapCount", "Sensitivity", "Specificity")
+  rownames(res)<-c(cnames[2:length(cnames)])
+  res
+}
+
+matched<-read.table("TCGA_muTect_varscan2_rsmc.site.tsv",sep='\t',header=T)
 matched$DNA_M_V<-(matched$DNA_MUTECT != '' & matched$DNA_VARSCAN2 != '')
 matched$DNA_M_V[!matched$DNA_M_V]<-''
 
+pdf("TCGA_muTect_varscan2_rsmc.site.DNA.pdf")
 drawvenn(matched, colnames(matched)[c(5:8)])
+dev.off()
+
+write.csv(calculateTable(matched, colnames(matched)[c(5:8)]), file="TCGA_muTect_varscan2_rsmc.site.DNA.csv")
+
+pdf("H:/shengquanhu/projects/somaticmutation/TCGA_muTect_varscan2_rsmc.site.RNA.pdf")
 drawvenn(matched, colnames(matched)[c(5,9:11)])
+dev.off()
 
+write.csv(calculateTable(matched, colnames(matched)[c(5,9:11)]), file="TCGA_muTect_varscan2_rsmc.site.RNA.csv")
+
+pdf("H:/shengquanhu/projects/somaticmutation/TCGA_muTect_varscan2_rsmc.site.RNA_MV.pdf")
 drawvenn(matched, colnames(matched)[c(19,9:11)])
+dev.off()
 
-         names<-c("DNA_TCGA", "DNA_MUTECT", "DNA_VARSCAN2", "DNA_RSMC")
+write.csv(calculateTable(matched, colnames(matched)[c(19,9:11)]), file="TCGA_muTect_varscan2_rsmc.site.RNA_MV.csv")
 
-draw.quad.venn(tcga,
-               dna_mutect,
-               dna_varscan2,
-               dna_rsmc,
-
-               getintersect(matched, c("DNA_TCGA", "DNA_MUTECT")),
-               getintersect(matched, c("DNA_TCGA", "DNA_VARSCAN2")),
-               getintersect(matched, c("DNA_TCGA", "DNA_RSMC")),
-               getintersect(matched, c("DNA_MUTECT", "DNA_VARSCAN2")),
-               getintersect(matched, c("DNA_MUTECT", "DNA_RSMC")),
-               getintersect(matched, c("DNA_VARSCAN2", "DNA_RSMC")),
-               
-               getintersect(matched, c("DNA_TCGA", "DNA_MUTECT", "DNA_VARSCAN2")),
-               getintersect(matched, c("DNA_TCGA", "DNA_MUTECT", "DNA_RSMC")),
-               getintersect(matched, c("DNA_TCGA", "DNA_VARSCAN2", "DNA_RSMC")),
-               getintersect(matched, c("DNA_MUTECT", "DNA_VARSCAN2", "DNA_RSMC")),
-
-               getintersect(matched, c("DNA_TCGA", "DNA_MUTECT", "DNA_VARSCAN2", "DNA_RSMC")),
-               
-               category=c("DNA_TCGA", "DNA_MUTECT", "DNA_VARSCAN2", "DNA_RSMC")
-)

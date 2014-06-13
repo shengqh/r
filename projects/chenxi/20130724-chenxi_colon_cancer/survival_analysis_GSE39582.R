@@ -8,9 +8,8 @@ library(survival)
 library(multtest)
 library(GEOquery)
 
-aa<-getGEO("GSE39582")
-GSE39582<-aa
-save(GSE39582, file="GSE39582.RData")
+#GSE39582<-getGEO("GSE39582")
+#save(GSE39582, file="GSE39582.RData")
 load("GSE39582.RData")
 pinfo<-pData(phenoData(GSE39582[[1]]))
 
