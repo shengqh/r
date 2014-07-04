@@ -47,25 +47,28 @@ calculateTable<-function(data, cnames){
   res
 }
 
-matched<-read.table("TCGA_muTect_varscan2_rsmc.site.tsv",sep='\t',header=T)
+all<-read.table("TCGA_muTect_varscan2_rsmc.site.tsv",sep='\t',header=T)
+read10<-read.table("TCGA_muTect_varscan2_rsmc.site.depth10",sep='\t',header=T)
+matched<-all[read10$IsDepth10 == "True",]
+
 matched$DNA_M_V<-(matched$DNA_MUTECT != '' & matched$DNA_VARSCAN2 != '')
 matched$DNA_M_V[!matched$DNA_M_V]<-''
 
-pdf("TCGA_muTect_varscan2_rsmc.site.DNA.pdf")
+pdf("TCGA_muTect_varscan2_rsmc.site.DNA.depth10.pdf")
 drawvenn(matched, colnames(matched)[c(5:8)])
 dev.off()
 
-write.csv(calculateTable(matched, colnames(matched)[c(5:8)]), file="TCGA_muTect_varscan2_rsmc.site.DNA.csv")
+write.csv(calculateTable(matched, colnames(matched)[c(5:8)]), file="TCGA_muTect_varscan2_rsmc.site.DNA.depth10.csv")
 
-pdf("H:/shengquanhu/projects/somaticmutation/TCGA_muTect_varscan2_rsmc.site.RNA.pdf")
+pdf("H:/shengquanhu/projects/somaticmutation/TCGA_muTect_varscan2_rsmc.site.RNA.depth10.pdf")
 drawvenn(matched, colnames(matched)[c(5,9:11)])
 dev.off()
 
-write.csv(calculateTable(matched, colnames(matched)[c(5,9:11)]), file="TCGA_muTect_varscan2_rsmc.site.RNA.csv")
+write.csv(calculateTable(matched, colnames(matched)[c(5,9:11)]), file="TCGA_muTect_varscan2_rsmc.site.RNA.depth10.csv")
 
-pdf("H:/shengquanhu/projects/somaticmutation/TCGA_muTect_varscan2_rsmc.site.RNA_MV.pdf")
+pdf("H:/shengquanhu/projects/somaticmutation/TCGA_muTect_varscan2_rsmc.site.RNA_MV.depth10.pdf")
 drawvenn(matched, colnames(matched)[c(19,9:11)])
 dev.off()
 
-write.csv(calculateTable(matched, colnames(matched)[c(19,9:11)]), file="TCGA_muTect_varscan2_rsmc.site.RNA_MV.csv")
+write.csv(calculateTable(matched, colnames(matched)[c(19,9:11)]), file="TCGA_muTect_varscan2_rsmc.site.RNA_MV.depth10.csv")
 
