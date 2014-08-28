@@ -1,5 +1,0 @@
-data<-read.table("H:/shengquanhu/projects/rcpa/TurboRaw2Mgf/iTRAQ4/mascot/summary/scoreimprovement_8_5.tsv", header=T,row.names=1)
-plot(data$BeforeScore, data$AfterScore)
-abline(0,1,col="red")
-table(data$AfterScore > data$BeforeScore)
-hist(data$AfterScore-data$BeforeScore)
