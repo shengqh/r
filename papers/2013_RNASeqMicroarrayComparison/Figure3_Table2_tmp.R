@@ -1,9 +1,9 @@
 library("grid")
 library("VennDiagram")
 
-rootdir<-"E:/sqh/Dropbox/career/papers/published/2013-RNAseqMicroarrayComparison";
+setwd("E:/sqh/Dropbox/career/papers/published/2013-RNAseqMicroarrayComparison")
 
-tiff(filename=paste0(rootdir,"/Figure3_RelativeComparison_tmp.tif"), width=3000, height=1500, res=300, compression="lzw")
+tiff(filename="Figure3_RelativeComparison_tmp.tif", width=3000, height=1500, res=300, compression="lzw")
 
 par(mfrow=c(1,2))
 
@@ -15,7 +15,7 @@ fsize=16
 #relative comparison
 par(mar=c(14,9,3.2,3.5))
 
-datafile<-paste0(rootdir, "/Figure3_BrcaRelativeComparison.tsv");
+datafile<-"Figure3_BrcaRelativeComparison.tsv"
 data<-read.table(datafile, header=T,row.names=1, check.names=F)
 labels=rep("",length(colnames(data)))
 bxp <- boxplot(data, names=labels, ylab="Spearman correlation\ncoefficient", ylim=c(0.25, 1.0), medcol="red", boxwex=0.45)
@@ -29,14 +29,14 @@ text(x=1.5, y=0.95, labels=c('** p < 0.001'), cex=0.5)
 wilcox.test(data[,1], data[,2], paired=TRUE)
 
 #venndiagram
-datafile<-paste0(rootdir, "/Figure3_BRCA_PValue.csv");
+datafile<-"Figure3_BRCA_PValue.csv"
 data<-read.csv(datafile, header=T, row.names=1, check.names=F)
 
 agi<-subset(data, (abs(data[,1]) >= 1) & (data[,3] <= 0.01))
-write.csv(agi, paste0(rootdir, "/Figure3_Agilent_significant.csv"))
+#write.csv(agi, paste0(rootdir, "/Figure3_Agilent_significant.csv"))
 
 rnaseq<-subset(data, (!is.na(data[,6])) & (abs(data[,4]) >= 1) & (data[,6] <= 0.01))
-write.csv(rnaseq, paste0(rootdir, "/Figure3_RNAseq_significant.csv"))
+#write.csv(rnaseq, paste0(rootdir, "/Figure3_RNAseq_significant.csv"))
 
 common<-subset(data, (abs(data[,1]) >= 1) & (data[,3] <= 0.01) & (!is.na(data[,6])) & (abs(data[,4]) >= 1) & (data[,6] <= 0.01))
 union<-subset(data, ((abs(data[,1]) >= 1) & (data[,3] <= 0.01)) || ((!is.na(data[,6])) & (abs(data[,4]) >= 1) & (data[,6] <= 0.01)))
@@ -106,7 +106,7 @@ inconsistent<-coltabl["red"] * 100 / (coltabl["red"] + coltabl["green2"])
 
 inconsistentData<-subset(data, cols=="red")[,c(1:6)]
 colnames(inconsistentData)<-c("log2(AgilentFoldChange)",  "pValue(Agilent)",	"fdr(Agilent)",	"log2(RPKMFoldChange)",	"pValue(RPKM)",	"fdr(RPKM)")
-write.csv(inconsistentData, paste0(rootdir, "/Table2_DiffOritation.csv"))
+#write.csv(inconsistentData, paste0(rootdir, "/Table2_DiffOritation.csv"))
 
 plot(data$RPKMFold, data$AgilentFold,  ylab="log2(Agilent fold change)", xlab="log2(RNAseq fold change)", ylim=c(-10,10), col=cols, cex=0.2)
 
@@ -117,8 +117,8 @@ legend("topleft", c(sprintf("Inconsistent (%0.1f%%)", inconsistent),
 
 dev.off();
 
-datafile<-paste0(rootdir, "/Figure3_BrcaRelativeComparison.tsv");
+datafile<-"Figure3_BrcaRelativeComparison.tsv"
 data<-read.table(datafile, header=T,row.names=1, check.names=F)
 aa<-apply(data,2, function(x) c(median(x), min(x), max(x)))
 rownames(aa)<-c("median","minimum","maximum")
-write.csv(aa, paste0(rootdir, "/Figure3_BrcaRelativeComparison.summary.csv"))
+#write.csv(aa, paste0(rootdir, "/Figure3_BrcaRelativeComparison.summary.csv"))
