@@ -6,12 +6,17 @@ celtable<-read.table("Step_07_CelFileList.tsv", sep="\t", header=T, as.is=TRUE)
 celtypes = unique(celtable$Type)
 celtype<-celtypes[1]
 for(celtype in celtypes){
-  curdata<-celtable[celtable$Type==celtype,]
-  celfiles<-curdata$File
-  data<-ReadAffy(filenames=curdata$File, sampleNames=curdata$Name );
-  rmadata<-rma(data,normalize=FALSE,background=TRUE);
-  rm(data);
-  tsvfile<-paste0("Step_8_Expression_", celtype, ".tsv");
-  write.exprs(rmadata,file=tsvfile);
-  rm(rmadata);
+  typedata<-celtable[celtable$Type==celtype,]
+  datasets<-unique(typedata$Dataset)
+  dataset<-datasets[1]
+  for(dataset in datasets)
+  {
+    rdatafile<-paste0("Step_08_Expression_", celtype, "_", dataset, ".rdata")
+    cat(rdatafile, "\n")
+    if(!file.exists(rdatafile)){
+      curdata<-typedata[typedata$Dataset==dataset,]
+      data<-ReadAffy(filenames=curdata$File, sampleNames=curdata$Name, verbose=TRUE );
+      save(data, file=rdatafile)
+    }
+  }
 }
