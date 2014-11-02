@@ -1,6 +1,6 @@
 library(affy)
 
-setwd("H:/shengquanhu/projects/BreastCancer/Dataset/")
+setwd("/scratch/cqs/shengq1/chenxi/20141101_breastcancer_microarray/trainingset")
 
 celtable<-read.table("Step_07_CelFileList.tsv", sep="\t", header=T, as.is=TRUE)
 celtypes = unique(celtable$Type)
