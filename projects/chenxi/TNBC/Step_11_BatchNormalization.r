@@ -5,14 +5,12 @@ library("hgu133a.db")
 if (.Platform$OS.type == "unix") {
   setwd("/scratch/cqs/shengq1/breastcancer/final/trainingdataset_old_repeat")
 }else{
-  setwd("D:/projects/BreastCancer/final");
+  setwd("H:/shengquanhu/projects/BreastCancer/Dataset")
 }
 
-batch<-read.table("breastcancer_affymetrix.tsv.batchdefinition")
+batch<-read.table("Step_07_CelFileList.tsv", sep="\t", header=T)
 
-dataFile<-"breastcancer_affymetrix.tsv.qnorm";
-
-mdata<-read.csv(dataFile,header=T,row.name=1)
+load("Step_10_expression_commonprobes.qnorm.RData")
 
 foo<-lm(t(mdata) ~ as.factor(batch$V1))
 rm(mdata)
