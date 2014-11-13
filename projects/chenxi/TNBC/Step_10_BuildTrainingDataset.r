@@ -75,6 +75,7 @@ rm(bdata)
 arrayIQR<-apply(gpdata,1,IQR)
 probeName<-rownames(gpdata)
 largestProbeName<-findLargest(as.vector(probeName),arrayIQR,"hgu133a")
+save(largestProbeName, file="Step_12_expression_commonprobes.largestprobe.RData")
 
 #present each gene by largest IQR probe
 isLargestProbe<-rownames(gpdata) %in% largestProbeName
