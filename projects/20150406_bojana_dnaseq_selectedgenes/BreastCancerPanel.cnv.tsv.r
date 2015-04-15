@@ -1,6 +1,6 @@
 setwd("H:/shengquanhu/projects/Jennifer/20150406_bojana_dnaseq_selectedgenes")
-data<-read.table("BreastCancerPanel.cnv.gene.tsv", sep="\t", header=T)
-outputfile<-"BreastCancerPanel.cnv.gene.png"
+inputfile<-"BreastCancerPanel.cnv.gene.tsv"
+data<-read.table(inputfile, sep="\t", header=T)
 title<-"Number of Copy Number Variation detected in capture range"
 
 library(reshape)
@@ -18,7 +18,7 @@ names(colors)<-c("PCR", "NO-PCR", "NEAR-PCR")
 
 library(ggplot2)
 
-png(file=outputfile, width=8000, height=16000, res=300)
+png(file=paste0(inputfile, ".png"), width=8000, height=16000, res=300)
 ggplot(data=md, aes(x=Sample, y=Gene)) +       
   geom_point(aes(size=CNVCount), colour="darkblue") +
   ggtitle(title) +
@@ -28,7 +28,7 @@ dev.off()
 
 mygenes<-read.table("mygenes.txt")
 mydata<-md[md$Gene %in% mygenes$V1,]
-png(file="mygene.cnv.png", width=8000, height=2000, res=300)
+png(file=paste0(inputfile, ".mygene.png"), width=8000, height=2000, res=300)
 ggplot(data=mydata, aes(x=Sample, y=Gene)) +       
   geom_point(aes(size=CNVCount), colour="darkblue") +
   ggtitle(title) +
