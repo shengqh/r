@@ -1,5 +1,5 @@
 setwd("E:/sqh/programs/r/projects/20150722_shyr_movie/figure")
-png("foo%02d.png")
+jpeg("figure1_%02d.jpg", width=1000, height=600, res=200)
 par(mfcol=c(1,2), mar = c(3, 2, 0.5, 1))
 n<-30;w<-100
 alpha<-0.05
@@ -23,7 +23,5 @@ for (i in 1:w) {
 }
 dev.off()
 
-make.mov <- function(){
-  unlink("plot.mpg")
-  system("convert -delay 0.5 foo*.png plot.mpg")
-}
+unlink("figure1.mp4")
+system("E:/tools/ImageMagick-7.0.0-0-portable-Q16-x64/ffmpeg.exe -r 10 -qscale 2 -i figure1_%02d.jpg figure1.mp4")
