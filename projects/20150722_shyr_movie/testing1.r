@@ -24,4 +24,4 @@ for (i in 1:w) {
 dev.off()
 
 unlink("figure1.mp4")
-system("E:/tools/ImageMagick-7.0.0-0-portable-Q16-x64/ffmpeg.exe -r 10 -qscale 2 -i figure1_%02d.jpg figure1.mp4")
+system("E:/tools/ImageMagick-7.0.0-0-portable-Q16-x64/ffmpeg.exe -r 2 -qscale 2 -i figure1_%02d.jpg figure1_2pics_per_second.mp4")
