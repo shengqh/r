@@ -1,13 +1,10 @@
 
 setwd("H:/shengquanhu/projects/Jennifer/20150630_bojana_tnbc/star_deseq2/result")  
 
-data<-read.table("H:/shengquanhu/projects/Jennifer/20150630_bojana_tnbc/star_genetable/result/20150630_bojana_tnbc_gene.count",row.names=1, header=T, check.names=F)
-
 showLabelInPCA<-1
 showDEGeneCluster<-1
 pvalue<-0.05
 foldChange<-2
-minMedianInGroup<-5
 
 library("DESeq2")
 library("heatmap3")
@@ -62,7 +59,7 @@ options(expressions=5e4)
 
 hmcols <- colorRampPalette(c("green", "black", "red"))(256)
 
-drawHCA<-function(prefix, rldselect, designData, conditionColors, gnames){
+drawHCA<-function(prefix, rldselect, designData, conditionColors, rowv=NA, distfun=function(x) as.dist(1 - cor(t(x), use = "pa"))){
   htfile<-paste0(prefix, "_DESeq2-vsd-heatmap.png")
   cat("saving HCA to ", htfile, "\n")
   genecount<-nrow(rldselect)
@@ -85,12 +82,13 @@ drawHCA<-function(prefix, rldselect, designData, conditionColors, gnames){
     legendcolors<-c("green", "blue", "red", "white", subtypeColors, "white", treatmentColors )
     
     heatmap3(rldselect, 
+             Rowv = rowv,
              col = hmcols, 
              ColSideColors = gsColors, 
              margins=c(12,5), 
              scale="r", 
-             dist=dist, 
              labRow=NA,
+             distfun=distfun,
              main=paste0("Hierarchical Cluster Using ", genecount, " Genes"),  
              cexCol=cexCol, 
              legendfun=function() showLegend(legend=legendnames, col=legendcolors,cex=1.0,x="center"))
@@ -133,120 +131,133 @@ drawPCA<-function(prefix, rldmatrix, showLabelInPCA, designData, conditionColors
   dev.off()
 }
 
-isDataNumeric = unlist(lapply(data[1,], function(x){is.numeric(x)}))
-index = 1
-while(!all(isDataNumeric[index:ncol(data)])){
-  index = index + 1
-}
+minMedianInGroup<-0
 
-indecies<-c(1:(index-1))
-
-designData<-read.csv("design.csv")
-countData<-data[,as.character(designData$Sample)]
-countData[is.na(countData)] <- 0
-countData<-round(countData)
-
-designData$Condition<-as.factor(ifelse(designData$Response=="Group 3","Group 3","Group 1+2"))
-
-comparisonName<-"ClinicalResponse"
-prefix<-comparisonName
-curdata<-data
-if(minMedianInGroup > 0){
-  conds<-as.character(levels(designData$Response))
-  data1<-countData[, colnames(countData) %in% designData$Sample[designData$Response==conds[1]]]
-  data2<-countData[, colnames(countData) %in% designData$Sample[designData$Response==conds[2]]]
-  data3<-countData[, colnames(countData) %in% designData$Sample[designData$Response==conds[3]]]
-  med1<-apply(data1, 1, median) >= minMedianInGroup
-  med2<-apply(data2, 1, median) >= minMedianInGroup
-  med3<-apply(data3, 1, median) >= minMedianInGroup
+for(minMedianInGroup in c(0,5)){
+  data<-read.table("H:/shengquanhu/projects/Jennifer/20150630_bojana_tnbc/star_genetable/result/20150630_bojana_tnbc_gene.count",row.names=1, header=T, check.names=F)
   
-  med<-med1 | med2 | med3
-
-  countData<-countData[med,]
-  cat(nrow(countData), " genes with minimum median count in group larger or equals than ", minMedianInGroup, "\n")
-  prefix<-paste0(comparisonName, "_min", minMedianInGroup)
-  curdata<-data[med,]
-}
-
-notEmptyData<-apply(countData, 1, max) > 0
-countData<-countData[notEmptyData,]
-curdata<-curdata[notEmptyData,]
-
-rownames(designData)<-designData$Sample
-conditionColors<-as.matrix(data.frame(Response=c("green", "blue", "red")[designData$Response]))
-
-#some basic graph
-dds=DESeqDataSetFromMatrix(countData = countData,
-                           colData = designData,
-                           design = ~1)
-
-colnames(dds)<-colnames(countData)
-
-#draw density graph
-rldmatrix<-as.matrix(log2(counts(dds,normalized=FALSE) + 1))
-rsdata<-melt(rldmatrix)
-colnames(rsdata)<-c("Gene", "Sample", "log2Count")
-png(filename=paste0(prefix, "_DESeq2-log2-density.png"), width=6000, height=4000, res=300)
-g<-ggplot(rsdata) + geom_density(aes(x=log2Count, colour=Sample)) + xlab("DESeq2 log2 transformed count")
-print(g)
-dev.off()
-
-png(filename=paste0(prefix, "_DESeq2-log2-density-individual.png"), width=6000, height=4000, res=300)
-g<-ggplot(rsdata) + geom_density(aes(x=log2Count, colour=Sample)) + facet_wrap(~Sample, scales = "free") + xlab("DESeq2 log2 transformed count")
-print(g)
-dev.off()
-
-#varianceStabilizingTransformation
-vsd <- varianceStabilizingTransformation(dds, blind=TRUE)
-assayvsd<-assay(vsd)
-write.csv(assayvsd, file=paste0(prefix, "_DESeq2-vsd.csv"))
-
-vsdiqr<-apply(assayvsd, 1, IQR)
-assayvsd<-assayvsd[order(vsdiqr, decreasing=T),]
-
-rldmatrix=as.matrix(assayvsd)
-
-#draw pca graph
-drawPCA(paste0(prefix,"_geneAll"), rldmatrix, showLabelInPCA, designData, conditionColors)
-
-#draw heatmap
-drawHCA(paste0(prefix,"_gene500"), rldmatrix[1:min(500, nrow(rldmatrix)),,drop=F], designData, conditionColors)
-
-drawHCA(paste0(prefix,"_geneAll"), rldmatrix, designData, conditionColors)
-
-dds=DESeqDataSetFromMatrix(countData = countData,
-                           colData = designData,
-                           design = ~ Condition)
-
-dds <- DESeq(dds)
-res<-results(dds,cooksCutoff=FALSE)
-
-cat("DESeq2 finished.\n")
-
-select<-(!is.na(res$padj)) & (res$padj<pvalue) & ((res$log2FoldChange >= log2(foldChange)) | (res$log2FoldChange <= -log2(foldChange)))
-
-if(length(indecies) > 0){
-  inddata<-curdata[,indecies,drop=F]
-  tbb<-cbind(inddata, countData, res)
-}else{
-  tbb<-cbind(countData, res)
-}
-tbbselect<-tbb[select,,drop=F]
-
-tbb<-tbb[order(tbb$padj),,drop=F]
-write.csv(as.data.frame(tbb),paste0(prefix, "_DESeq2.csv"))
-
-tbbselect<-tbbselect[order(tbbselect$padj),,drop=F]
-write.csv(as.data.frame(tbbselect),paste0(prefix, "_DESeq2_sig.csv"))
-
-if(showDEGeneCluster){
-  siggenes<-rownames(rldmatrix) %in% rownames(tbbselect)
   
-  #nonDEmatrix<-rldmatrix[!siggenes,,drop=F]
-  #drawPCA(paste0(prefix,"_geneNotDE"), nonDEmatrix, showLabelInPCA, designData, conditionColors)
-  #drawHCA(paste0(prefix,"_geneNotDE"), nonDEmatrix, designData, conditionColors)
+  isDataNumeric = unlist(lapply(data[1,], function(x){is.numeric(x)}))
+  index = 1
+  while(!all(isDataNumeric[index:ncol(data)])){
+    index = index + 1
+  }
   
-  DEmatrix<-rldmatrix[siggenes,,drop=F]
-  drawHCA(paste0(prefix,"_geneDE"),DEmatrix, designData, conditionColors)
+  indecies<-c(1:(index-1))
+  
+  designData<-read.csv("design.csv")
+  countData<-data[,as.character(designData$Sample)]
+  countData[is.na(countData)] <- 0
+  countData<-round(countData)
+  
+  designData$Condition<-as.factor(ifelse(designData$Response=="Group 3","Group 3","Group 1+2"))
+  
+  comparisonName<-"ClinicalResponse"
+  prefix<-comparisonName
+  curdata<-data
+  if(minMedianInGroup > 0){
+    conds<-as.character(levels(designData$Response))
+    data1<-countData[, colnames(countData) %in% designData$Sample[designData$Response==conds[1]]]
+    data2<-countData[, colnames(countData) %in% designData$Sample[designData$Response==conds[2]]]
+    data3<-countData[, colnames(countData) %in% designData$Sample[designData$Response==conds[3]]]
+    med1<-apply(data1, 1, median) >= minMedianInGroup
+    med2<-apply(data2, 1, median) >= minMedianInGroup
+    med3<-apply(data3, 1, median) >= minMedianInGroup
+    
+    med<-med1 | med2 | med3
+    
+    countData<-countData[med,]
+    cat(nrow(countData), " genes with minimum median count in group larger or equals than ", minMedianInGroup, "\n")
+    prefix<-paste0(comparisonName, "_min", minMedianInGroup)
+    curdata<-data[med,]
+  }
+  
+  notEmptyData<-apply(countData, 1, max) > 0
+  countData<-countData[notEmptyData,]
+  curdata<-curdata[notEmptyData,]
+  
+  rownames(designData)<-designData$Sample
+  conditionColors<-as.matrix(data.frame(Response=c("green", "blue", "red")[designData$Response]))
+  
+  #some basic graph
+  dds=DESeqDataSetFromMatrix(countData = countData,
+                             colData = designData,
+                             design = ~1)
+  
+  colnames(dds)<-colnames(countData)
+  
+  #draw density graph
+  rldmatrix<-as.matrix(log2(counts(dds,normalized=FALSE) + 1))
+  rsdata<-melt(rldmatrix)
+  colnames(rsdata)<-c("Gene", "Sample", "log2Count")
+  png(filename=paste0(prefix, "_DESeq2-log2-density.png"), width=6000, height=4000, res=300)
+  g<-ggplot(rsdata) + geom_density(aes(x=log2Count, colour=Sample)) + xlab("DESeq2 log2 transformed count")
+  print(g)
+  dev.off()
+  
+  png(filename=paste0(prefix, "_DESeq2-log2-density-individual.png"), width=6000, height=4000, res=300)
+  g<-ggplot(rsdata) + geom_density(aes(x=log2Count, colour=Sample)) + facet_wrap(~Sample, scales = "free") + xlab("DESeq2 log2 transformed count")
+  print(g)
+  dev.off()
+  
+  #varianceStabilizingTransformation
+  vsd <- varianceStabilizingTransformation(dds, blind=TRUE)
+  assayvsd<-assay(vsd)
+  write.csv(assayvsd, file=paste0(prefix, "_DESeq2-vsd.csv"))
+  
+  vsdiqr<-apply(assayvsd, 1, IQR)
+  assayvsd<-assayvsd[order(vsdiqr, decreasing=T),]
+  
+  rldmatrix=as.matrix(assayvsd)
+  
+  #draw pca graph
+  drawPCA(paste0(prefix,"_geneAll"), rldmatrix, showLabelInPCA, designData, conditionColors)
+  
+  #draw heatmap
+  drawHCA(paste0(prefix,"_gene500"), rldmatrix[1:min(500, nrow(rldmatrix)),,drop=F], designData, conditionColors, rowv=NULL)
+  
+  drawHCA(paste0(prefix,"_geneAll"), rldmatrix, designData, conditionColors)
+  
+  dds=DESeqDataSetFromMatrix(countData = countData,
+                             colData = designData,
+                             design = ~ Condition)
+  
+  dds <- DESeq(dds)
+  res<-results(dds,cooksCutoff=FALSE)
+  
+  cat("DESeq2 finished.\n")
+  
+  select<-(!is.na(res$padj)) & (res$padj<pvalue) & ((res$log2FoldChange >= log2(foldChange)) | (res$log2FoldChange <= -log2(foldChange)))
+  
+  if(length(indecies) > 0){
+    inddata<-curdata[,indecies,drop=F]
+    tbb<-cbind(inddata, countData, res)
+  }else{
+    tbb<-cbind(countData, res)
+  }
+  tbbselect<-tbb[select,,drop=F]
+  
+  tbb<-tbb[order(tbb$padj),,drop=F]
+  write.csv(as.data.frame(tbb),paste0(prefix, "_DESeq2.csv"))
+  
+  tbbselect<-tbbselect[order(tbbselect$padj),,drop=F]
+  write.csv(as.data.frame(tbbselect),paste0(prefix, "_DESeq2_sig.csv"))
+  
+  if(showDEGeneCluster){
+    siggenes<-rownames(rldmatrix) %in% rownames(tbbselect)
+    
+    #nonDEmatrix<-rldmatrix[!siggenes,,drop=F]
+    #drawPCA(paste0(prefix,"_geneNotDE"), nonDEmatrix, showLabelInPCA, designData, conditionColors)
+    #drawHCA(paste0(prefix,"_geneNotDE"), nonDEmatrix, designData, conditionColors)
+    
+    DEmatrix<-rldmatrix[siggenes,,drop=F]
+    drawHCA(paste0(prefix,"_geneDE"),DEmatrix, designData, conditionColors, rowv=NULL)
+  }
 }
+
+library("ggdendro")
+dedist<-as.dist(1 - cor(DEmatrix, use = "pa"))
+hc <- hclust(dedist, "complete")
+p1<-ggdendrogram(hc, rotate=FALSE)
+
 
