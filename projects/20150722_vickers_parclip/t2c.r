@@ -18,3 +18,11 @@ dev.off()
 png("t2c_averageSitePer10Bases_in_all_reads.png", width=2000,height=2000,res=200)
 ggplot(data, aes(Category, AverageT2CIn10BasesOfTotalRead, color=Category)) + geom_violin() + facet_grid(File ~ .) + ylab("Average T2C mutation sites per 10 bases in all reads")
 dev.off()
+
+png("t2c_averageSitePerRead_in_unique_reads.png", width=2000,height=2000,res=200)
+ggplot(data, aes(Category, AvergeT2COfUniqueRead, color=Category)) + geom_violin() + facet_grid(File ~ .) + ylab("Average T2C mutation sites per read in unique reads")
+dev.off()
+
+png("t2c_averageSitePerRead_in_all_reads.png", width=2000,height=2000,res=200)
+ggplot(data, aes(Category, AverageT2COfTotalRead, color=Category)) + geom_violin() + facet_grid(File ~ .) + ylab("Average T2C mutation sites per read in all reads")
+dev.off()
