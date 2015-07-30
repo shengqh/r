@@ -1,11 +1,11 @@
 library("DESeq2")
 library("heatmap3")
 
-hmcols <- colorRampPalette(c("green", "black", "red"))(256)
+hmcols <- colorRampPalette(c("blue", "white", "red"))(256)
 
 drawHCA<-function(rldselect, labRow=NA, distfun=function(x) as.dist(1 - cor(t(x), use = "pa"))){
     cexCol = max(1.0, 0.2 + 1/log10(ncol(rldselect)))
-    cexRow = max(1.0, 0.1 + 1/log10(nrow(rldselect)))
+    cexRow = max(1.0, 0.2 + 1/log10(nrow(rldselect)))
     heatmap3(rldselect, 
              col = hmcols, 
              margins=c(12,5), 
