@@ -17,17 +17,19 @@ tpColors<-rainbow(length(unique(daypoints)))
 gsColors<-as.matrix(data.frame(Day=tpColors[daypoints]))
 cexCol = max(1.0, 0.2 + 1/log10(ncol(data)))
 
-png(file="ProteinIntensities.allProteins.heatmap.png", width=4000, height=3000, res=300)
-heatmap3(data, 
-         col = hmcols, 
-         ColSideColors = gsColors, 
-         margins=c(12,5), 
-         scale="r", 
-         labRow=NA,
-         main=paste0("Hierarchical Cluster Using ", nrow(data), " Proteins"),  
-         cexCol=cexCol,
-         legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
-dev.off()
+if(!file.exists("ProteinIntensities.allProteins.heatmap.png")){
+  png(file="ProteinIntensities.allProteins.heatmap.png", width=4000, height=3000, res=300)
+  heatmap3(data, 
+           col = hmcols, 
+           ColSideColors = gsColors, 
+           margins=c(12,5), 
+           scale="r", 
+           labRow=NA,
+           main=paste0("Hierarchical Cluster Using ", nrow(data), " Proteins"),  
+           cexCol=cexCol,
+           legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
 
 aovpvalues<-apply(data,1,function(x){
   df<-data.frame(Intensity=unlist(x), Group=daypoints)
@@ -52,19 +54,21 @@ write.csv(data,file="ProteinIntensities.allProteins.csv")
 sigdata<-data[(data$padj < 0.05),]
 drawdata<-sigdata[,samples]
 
-png(file="ProteinIntensities.sigProteins.heatmap.png", width=4000, height=3000, res=300)
-hm<-heatmap3(drawdata, 
-             col = hmcols,
-             Colv=c(1:16),
-             ColSideColors = gsColors, 
-             margins=c(12,5), 
-             scale="r", 
-             labRow=NA,
-             main=paste0("Hierarchical Cluster Using ", nrow(sigdata), " Proteins"),  
-             cexCol=cexCol,
-             keep.dendro = TRUE,
-             legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
-dev.off()
+if(!file.exists("ProteinIntensities.sigProteins.heatmap.png")){
+  png(file="ProteinIntensities.sigProteins.heatmap.png", width=4000, height=3000, res=300)
+  hm<-heatmap3(drawdata, 
+               col = hmcols,
+               Colv=c(1:16),
+               ColSideColors = gsColors, 
+               margins=c(12,5), 
+               scale="r", 
+               labRow=NA,
+               main=paste0("Hierarchical Cluster Using ", nrow(sigdata), " Proteins"),  
+               cexCol=cexCol,
+               keep.dendro = TRUE,
+               legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
 
 hc.rows<- hclust(as.dist(1 - cor(t(drawdata), use = "pa")))
 
@@ -98,43 +102,47 @@ rownames(genecluster)<-genecluster$gene
 
 geneColors<-as.matrix(data.frame(Cluster=genecluster[rownames(drawdata),"cluster"]))
 
-png(file="ProteinIntensities.sigProteins.heatmap.cluster.png", width=4000, height=3000, res=300)
-heatmap3(drawdata, 
-         Colv=c(1:16),
-         col = hmcols, 
-         RowSideColors = geneColors, 
-         ColSideColors = gsColors, 
-         margins=c(12,5), 
-         scale="r", 
-         labRow=NA,
-         main=paste0("Hierarchical Cluster Using ", nrow(sigdata), " Proteins"),  
-         cexCol=cexCol,
-         keep.dendro = TRUE,
-         legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
-dev.off()
+if(!file.exists("ProteinIntensities.sigProteins.heatmap.cluster.png")){
+  png(file="ProteinIntensities.sigProteins.heatmap.cluster.png", width=4000, height=3000, res=300)
+  heatmap3(drawdata, 
+           Colv=c(1:16),
+           col = hmcols, 
+           RowSideColors = geneColors, 
+           ColSideColors = gsColors, 
+           margins=c(12,5), 
+           scale="r", 
+           labRow=NA,
+           main=paste0("Hierarchical Cluster Using ", nrow(sigdata), " Proteins"),  
+           cexCol=cexCol,
+           keep.dendro = TRUE,
+           legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
 
 sigdata$cluster<-genecluster[rownames(sigdata),"cluster"]
 
 write.csv(sigdata,file="ProteinIntensities.sigProteins.cluster.csv")
 
-sigdata<-sigdata[sigdata$maxLog2FoldChange >= 1,]
-drawdata<-sigdata[,samples]
+sig2data<-sigdata[sigdata$maxLog2FoldChange >= 1,]
+draw2data<-sig2data[,samples]
 
-png(file="ProteinIntensities.sigProteins.foldchange2.heatmap.png", width=4000, height=3000, res=300)
-heatmap3(drawdata, 
-         col = hmcols, 
-         Colv = c(1:16),
-         ColSideColors = gsColors, 
-         margins=c(12,5), 
-         scale="r", 
-         labRow=NA,
-         main=paste0("Hierarchical Cluster Using ", nrow(sigdata), " Proteins"),  
-         cexCol=cexCol,
-         keep.dendro = TRUE,
-         legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
-dev.off()
+if(!file.exists("ProteinIntensities.sigProteins.foldchange2.heatmap.png")){
+  png(file="ProteinIntensities.sigProteins.foldchange2.heatmap.png", width=4000, height=3000, res=300)
+  heatmap3(draw2data, 
+           col = hmcols, 
+           Colv = c(1:16),
+           ColSideColors = gsColors, 
+           margins=c(12,5), 
+           scale="r", 
+           labRow=NA,
+           main=paste0("Hierarchical Cluster Using ", nrow(sig2data), " Proteins"),  
+           cexCol=cexCol,
+           keep.dendro = TRUE,
+           legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
 
-hc.rows<- hclust(as.dist(1 - cor(t(drawdata), use = "pa")))
+hc.rows<- hclust(as.dist(1 - cor(t(draw2data), use = "pa")))
 
 ct<- cutree(hc.rows, h=1.7)
 plot(hc.rows)
@@ -151,25 +159,97 @@ genecluster<-rbind(data.frame(gene=names(c1), cluster="black"),
 genecluster$cluster<-as.factor(genecluster$cluster)
 rownames(genecluster)<-genecluster$gene
 
-geneColors<-as.matrix(data.frame(Cluster=genecluster[rownames(drawdata),"cluster"]))
+geneColors<-as.matrix(data.frame(Cluster=genecluster[rownames(draw2data),"cluster"]))
 
-png(file="ProteinIntensities.sigProteins.foldchange2.heatmap.cluster.png", width=4000, height=3000, res=300)
-heatmap3(drawdata, 
-             col = hmcols, 
-             Colv = c(1:16),
-             RowSideColors=geneColors,
-             ColSideColors = gsColors, 
-             margins=c(12,5), 
-             scale="r", 
-             labRow=NA,
-             main=paste0("Hierarchical Cluster Using ", nrow(sigdata), " Proteins"),  
-             cexCol=cexCol,
-             keep.dendro = TRUE,
-             legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
-dev.off()
+if(!file.exists("ProteinIntensities.sigProteins.foldchange2.heatmap.cluster.png")){
+  png(file="ProteinIntensities.sigProteins.foldchange2.heatmap.cluster.png", width=4000, height=3000, res=300)
+  heatmap3(draw2data, 
+           col = hmcols, 
+           Colv = c(1:16),
+           RowSideColors=geneColors,
+           ColSideColors = gsColors, 
+           margins=c(12,5), 
+           scale="r", 
+           labRow=NA,
+           main=paste0("Hierarchical Cluster Using ", nrow(sig2data), " Proteins"),  
+           cexCol=cexCol,
+           keep.dendro = TRUE,
+           legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
 
-sigdata$cluster<-genecluster[rownames(sigdata),"cluster"]
-write.csv(sigdata,file="ProteinIntensities.sigProteins.foldchange2.cluster.csv")
+sig2data$cluster<-genecluster[rownames(sig2data),"cluster"]
+write.csv(sig2data,file="ProteinIntensities.sigProteins.foldchange2.cluster.csv")
+
+sig15data<-sigdata[sigdata$maxLog2FoldChange >= log2(1.5),]
+draw15data<-sig15data[,samples]
+
+if(!file.exists("ProteinIntensities.sigProteins.foldchange1.5.heatmap.png")){
+  png(file="ProteinIntensities.sigProteins.foldchange1.5.heatmap.png", width=4000, height=3000, res=300)
+  heatmap3(draw15data, 
+           col = hmcols, 
+           Colv = c(1:16),
+           ColSideColors = gsColors, 
+           margins=c(12,5), 
+           scale="r", 
+           labRow=NA,
+           main=paste0("Hierarchical Cluster Using ", nrow(sig15data), " Proteins"),  
+           cexCol=cexCol,
+           keep.dendro = TRUE,
+           legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
+
+hc.rows<- hclust(as.dist(1 - cor(t(draw15data), use = "pa")))
+
+ct<- cutree(hc.rows, h=1.7)
+plot(hc.rows)
+rect.hclust(hc.rows, h=1.7)
+
+c1<-ct[ct==4]
+c2<-ct[ct==2]
+c3<-ct[ct==3]
+
+ct<- cutree(hc.rows, h=0.7)
+plot(hc.rows)
+rect.hclust(hc.rows, h=0.7)
+c4<-ct[ct==1]
+c5<-ct[ct==2]
+c6<-ct[ct==10]
+
+a<-c(names(c1), names(c2), names(c2), names(c2), names(c2), names(c2))
+
+genecluster<-rbind(data.frame(gene=names(c1), cluster="black"),
+                   data.frame(gene=names(c2), cluster="Green"),
+                   data.frame(gene=names(c3), cluster="Red"),
+                   data.frame(gene=names(c4), cluster="Purple"),
+                   data.frame(gene=names(c5), cluster="Pink"),
+                   data.frame(gene=names(c6), cluster="Blue"))
+
+genecluster$cluster<-as.factor(genecluster$cluster)
+rownames(genecluster)<-genecluster$gene
+
+geneColors<-as.matrix(data.frame(Cluster=genecluster[rownames(draw15data),"cluster"]))
+
+if(!file.exists("ProteinIntensities.sigProteins.foldchange1.5.heatmap.cluster.png")){
+  png(file="ProteinIntensities.sigProteins.foldchange1.5.heatmap.cluster.png", width=4000, height=3000, res=300)
+  heatmap3(draw15data, 
+           col = hmcols, 
+           Colv = c(1:16),
+           RowSideColors=geneColors,
+           ColSideColors = gsColors, 
+           margins=c(12,5), 
+           scale="r", 
+           labRow=NA,
+           main=paste0("Hierarchical Cluster Using ", nrow(sig15data), " Proteins"),  
+           cexCol=cexCol,
+           keep.dendro = TRUE,
+           legendfun=function() showLegend(legend=as.character(levels(daypoints)), col=tpColors,cex=1.0,x="center"))
+  dev.off()
+}
+
+sig15data$cluster<-genecluster[rownames(sig15data),"cluster"]
+write.csv(sig15data,file="ProteinIntensities.sigProteins.foldchange1.5.cluster.csv")
 
 # 
 # stressResponse<-c(0,0,0,0,3,3,3,3,2,2,2,2,1,1,1,1)

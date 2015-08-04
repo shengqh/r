@@ -18,6 +18,12 @@ drawHCA<-function(rldselect, labRow=NA, distfun=function(x) as.dist(1 - cor(t(x)
            cexRow=cexRow)
 }
 
+scale<-function(x){
+  x <- sweep(x, 1L, rowMeans(x, na.rm = TRUE), check.margin = FALSE)
+  sx <- apply(x, 1L, sd, na.rm = TRUE)
+  sweep(x, 1L, sx, "/", check.margin = FALSE)
+}
+
 setwd("H:/shengquanhu/projects/Jennifer/20150630_bojana_tnbc/heatmap")
 
 
@@ -40,9 +46,11 @@ gene1data<-assayvsd[rnames,]
 sdv<-apply(gene1data,1,sd)
 gene1data<-gene1data[sdv != 0,]
 rownames(gene1data)<-data[rownames(gene1data),"Feature_gene_name"]
-png(file="lar1.heatmap.png", width=3000, height=3000, res=300)
+png(file="lar1.4samples.heatmap.png", width=3000, height=3000, res=300)
 drawHCA(gene1data)
 dev.off()
+scaleGene1Data<-scale(gene1data)
+write.csv(scaleGene1Data, file="lar1.4samples.csv")
 
 gene2<-unlist(read.table("lar2.txt", header=F, stringsAsFactor=F)[,1])
 rnames<-rownames(data[data$Feature_gene_name %in% gene2,])
@@ -50,9 +58,11 @@ gene2data<-assayvsd[rnames,]
 sdv<-apply(gene2data,2,sd)
 gene2data<-gene2data[sdv != 0,]
 rownames(gene2data)<-data[rownames(gene2data),"Feature_gene_name"]
-png(file="lar2.heatmap.png", width=3000, height=3000, res=300)
+png(file="lar2.4samples.heatmap.png", width=3000, height=3000, res=300)
 drawHCA(gene2data, labRo=NULL)
 dev.off()
+scaleGene2Data<-scale(gene2data)
+write.csv(scaleGene2Data, file="lar2.4samples.csv")
 
 mydata<-data[,c("3193-BJ-0001","3193-BJ-0004","3193-BJ-0011")]
 designData<-data.frame(Sample=colnames(mydata), Group=1)
@@ -73,6 +83,8 @@ rownames(gene1data)<-data[rownames(gene1data),"Feature_gene_name"]
 png(file="lar1.3samples.heatmap.png", width=3000, height=3000, res=300)
 drawHCA(gene1data, cexCol=1.5)
 dev.off()
+scaleGene1Data<-scale(gene1data)
+write.csv(scaleGene1Data, file="lar1.3samples.csv")
 
 gene2<-unlist(read.table("lar2.txt", header=F, stringsAsFactor=F)[,1])
 rnames<-rownames(data[data$Feature_gene_name %in% gene2,])
@@ -83,3 +95,5 @@ rownames(gene2data)<-data[rownames(gene2data),"Feature_gene_name"]
 png(file="lar2.3samples.heatmap.png", width=3000, height=3000, res=300)
 drawHCA(gene2data, labRo=NULL, cexCol=1.5)
 dev.off()
+scaleGene2Data<-scale(gene2data)
+write.csv(scaleGene2Data, file="lar2.3samples.csv")
