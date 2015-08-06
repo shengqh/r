@@ -1,8 +1,8 @@
 setwd("H:/shengquanhu/projects/Jennifer/20150130_bojana_HiSeq_FFPE_FF/")  
 
 tnbcgenes<-read.table("E:/sqh/Dropbox/sciences/projects/20150226_bojana_MiSeq_HiSeq/TNBC_geneid.txt", header=F, stringsAsFactors=F)$V1
-hiseq<-unique(read.csv("H:/shengquanhu/projects/Jennifer/20150130_bojana_HiSeq_FFPE_FF/hiseq/star_deseq2/result/HiSeq_FFPE_VS_FF_DESeq2_sig.csv", header=T, stringsAsFactors=F)$Name)
-miseq<-unique(read.csv("H:/shengquanhu/projects/Jennifer/20150130_bojana_HiSeq_FFPE_FF/miseq/star_deseq2/result/MiSeq_FFPE_VS_FF_DESeq2_sig.csv", header=T, stringsAsFactors=F)$Name)
+hiseq<-unique(read.csv("H:/shengquanhu/projects/Jennifer/20150130_bojana_HiSeq_FFPE_FF/hiseq/star_deseq2/result/HiSeq_FFPE_VS_FF_min5_DESeq2_sig.csv", header=T, stringsAsFactors=F)$Feature_gene_name)
+miseq<-unique(read.csv("H:/shengquanhu/projects/Jennifer/20150130_bojana_HiSeq_FFPE_FF/miseq/star_deseq2/result/MiSeq_FFPE_VS_FF_min5_DESeq2_sig.csv", header=T, stringsAsFactors=F)$Feature_gene_name)
 
 hi_tnbc<-hiseq[hiseq %in% tnbcgenes]
 mi_tnbc<-miseq[miseq %in% tnbcgenes]
@@ -24,7 +24,7 @@ hi_tnbc_only<-length(hi_tnbc) - hi_mi_tnbc
 mi_tnbc_only<-length(mi_tnbc) - hi_mi_tnbc
 
 library(Vennerable)
-png(filename="FFPE_FF_DEGenes_TNBCGenes_overlap.png", width=3000, height =3000, res=300)
+png(filename="FFPE_FF_min5_DEGenes_TNBCGenes_overlap.png", width=3000, height =3000, res=300)
 common<-Venn(SetNames=c("HiSeq DE genes", "TNBC genes", "MiSeq DE genes"), 
              Weight=c(0, hionly, tnbconly, hi_tnbc_only, mionly, hi_mi_only, mi_tnbc_only, hi_mi_tnbc))
 plot(common)
