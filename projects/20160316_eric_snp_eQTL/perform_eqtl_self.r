@@ -1,11 +1,8 @@
 setwd("Y:/shengq1/20160316_eric_snp_eQTL")
 
 library(ggplot2)
-library(qqman)
 require(MASS)
 require(rms)
-require(biomaRt)
-require(snpStats)
 
 # adjust the limitation of y axis based on cis and trans pvalue
 manhattanYlim<-15
@@ -82,9 +79,9 @@ drawpicture<-function(snpbim, filtered, name, snp_data, gene_data){
   })
 }
 
-do_eqtls<-function(snps, gene_covariants){
-  result=snp_pos[,c(1:4)]
-  result$pvalue=apply(snps, 1, function(x){
+do_eqtls<-function(snp_info, snp_genotypes, gene_covariants){
+  result=snp_info
+  result$pvalue=apply(snp_genotypes, 1, function(x){
     gene_covariants$GenoType=x
     fit = lm( GenoType ~ GeneExpression + gender + family, data = gene_covariants );
     summary(fit)$coefficients["GeneExpression",4]
@@ -95,11 +92,11 @@ do_eqtls<-function(snps, gene_covariants){
   return (result)
 }
 
-perform_eqtls<-function(eqtls_file_name_noext, snps, gene_covariants, fdr_threshold=0.05){
+perform_eqtls<-function(eqtls_file_name_noext, snp_info, snp_genotypes, gene_covariants, fdr_threshold=0.05){
   allfile<-paste0(eqtls_file_name_noext, ".tsv")
   if(!file.exists(allfile)){
     cat('Calculating', eqtls_file_name_noext, 'eqtls\n')
-    eqtls=do_eqtls(snps, gene_covariants)
+    eqtls=do_eqtls(snp_info, snp_genotypes, gene_covariants)
     write.table(eqtls, file=allfile, sep="\t", row.names=F)
   }else{
     eqtls=read.delim(allfile, header=T)
@@ -117,7 +114,7 @@ perform_eqtls<-function(eqtls_file_name_noext, snps, gene_covariants, fdr_thresh
     
     sig_eqtls$kruskal = unlist(apply(sig_eqtls, 1, function(x){
       cursnp=x["snp"]
-      gt<-snps[cursnp,]
+      gt<-snp_genotypes[cursnp,]
       gtna<-is.na(gt)
       gt<-gt[!gtna]
       ge<-gene_covariants$GeneExpression[!gtna]
@@ -163,6 +160,7 @@ for(index in c(1:2)){
   
   gene_location_file_name<-paste0(gene_expression_file_name_noext, ".location.txt")
   if(!file.exists(gene_location_file_name)){
+    require(biomaRt)
     gss<-sub("_.*$", "", genesymbols, perl=TRUE) 
     grch37 = useMart(biomart="ENSEMBL_MART_ENSEMBL", host="grch37.ensembl.org", path="/biomart/martservice", dataset="hsapiens_gene_ensembl")
     genepos <- lapply(gss, function(x){
@@ -202,24 +200,27 @@ for(index in c(1:2)){
     cis_snp_pos=cis_snp_pos[which(cis_snp_pos$pos<geneloc$cismax[1]),]
     cis_snp = snp_data[cis_snp_pos$snp,]
     
-    cis_result<-perform_eqtls(paste0(expression_file_name_noext, ".cis"), cis_snp, ge_covariants)
+    cis_result<-perform_eqtls(paste0(expression_file_name_noext, ".cis"), cis_snp_pos, cis_snp, ge_covariants)
     cis_eqtls=cis_result$kw_sig_eqtls
     
-    drawpicture(snpbim, cis_eqtls, "cis", snp_data, gene_expression)
+    drawpicture(snpbim, cis_eqtls, "cis", cis_snp, gene_expression)
     
     trans_snp_pos=cursnppos[! cursnppos$snp %in% cis_snp_pos$snp,]
-    trans_result<-perform_eqtls(paste0(expression_file_name_noext, ".trans"), genesymbol, snp_data, trans_snp_pos, dat)
-    trans_eqtls=trans_result$
+    trans_snp = snp_data[trans_snp_pos$snp,]
+    trans_result<-perform_eqtls(paste0(expression_file_name_noext, ".trans"), trans_snp_pos, trans_snp, ge_covariants)
+    trans_eqtls=trans_result$kw_sig_eqtls
+
+    allsnps<-rbind(cis_result$eqtls, trans_result$eqtls)
+    #allsnps<-cis_result$eqtls
     
-    
-    allsnps<-rbind(cis_eqtls, trans_eqtls)
-    
-    snppvalue<-data.frame(SNP=cis_eqtls$snp, CHR=snpchrs, BP=snpbps, P=allsnps)
+    snppvalue<-allsnps[,c("snp", "chr", "pos", "pvalue")]
+    colnames(snppvalue)<-c("SNP","CHR","BP","P")
     snppvalue<-snppvalue[snppvalue$CHR < 24,]
     snppvalue<-snppvalue[with(snppvalue, order(CHR, BP)),]
     
-    png(file=paste0(expression_file_name_noext, ".", modelName, ".manhattan.png"), width=2000, height=2000, res=300)
+    png(file=paste0(expression_file_name_noext, ".manhattan.png"), width=2000, height=2000, res=300)
     manhattan(snppvalue, ylim=c(0, manhattanYlim), main=genename)
     dev.off()
+    drawpicture(snpbim, trans_eqtls, "trans", snp_data, gene_expression)
   }
 }
