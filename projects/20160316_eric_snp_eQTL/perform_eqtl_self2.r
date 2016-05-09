@@ -1,10 +1,13 @@
-#setwd("Y:/shengq1/20160316_eric_snp_eQTL")
-setwd("H:/shengquanhu/projects/20160316_eric_snp_eQTL")
+setwd("Y:/shengq1/20160316_eric_snp_eQTL")
+#setwd("X:/shengq1/20160316_eric_snp_eQTL")
 
-require(ggplot2)
-require(qqman)
+
+library(ggplot2)
 require(MASS)
 require(rms)
+library(lme4)
+library(nlme)
+library(qqman)
 
 # adjust the limitation of y axis based on cis and trans pvalue
 manhattanYlim<-15
@@ -83,19 +86,43 @@ drawpicture<-function(snpbim, filtered, name, snp_data, gene_data){
   }
 }
 
+
+########################################################
+# mixed effects model - fy 5/5/2016
 do_eqtls<-function(snp_info, snp_genotypes, gene_covariants){
   result=snp_info
   result$pvalue=apply(snp_genotypes, 1, function(x){
     gene_covariants$GenoType=x
-    dat=gene_covariants[(!is.na(x)) & (x != "NA"),]
-    fit = lm( GeneExpression ~ GenoType + gender + family, data = dat )
-    summary(fit)$coefficients["GenoType", 4]
+    #fit = lm( GenoType ~ GeneExpression + gender + family, data = gene_covariants )
+    
+    #print(gene_covariants$GenoType)
+    
+    dat<-gene_covariants[complete.cases(gene_covariants), ]
+    fit<-lme(GeneExpression ~ factor(GenoType) + gender, random = ~1|family, data = dat)
+    
+    #print(anova(fit))
+    
+    #Fstat<-anova(fit)[2,3] # overall F test statistic for genotype
+    Fp<-anova(fit)[2,4]  # overall F test pvalue for genetype
+    
+    #F.pvalue<-pf(q=Fstat, df1=2, df2=10, lower.tail=FALSE)
+    
+    #print(summary(fit)) #$coefficients) #["GenoType",4]
+    
+    #tp.1vs0<-summary(fit)$tTable[2,5]
+    #tp.2vs0<-summary(fit)$tTable[3,5]
+    
+    return(Fp)
   })
   
   result$fdr=p.adjust(result$pvalue)
   result=result[order(result$pvalue),]
   return (result)
 }
+
+#do_eqtls(cis_snp_pos, cis_snp, ge_covariants) # test
+
+########################################################
 
 perform_eqtls<-function(eqtls_file_name_noext, snp_info, snp_genotypes, gene_covariants, fdr_threshold=0.05){
   allfile<-paste0(eqtls_file_name_noext, ".tsv")
@@ -157,7 +184,7 @@ for(index in c(1:2)){
   snp_genotype_file_name <-snp_genotype_file_names[index]
   snp_genotype_file_name_noext<-sub("[.][^.]*$", "", snp_genotype_file_name, perl=TRUE)
   snp_data<-read.table(snp_genotype_file_name, sep="\t", header=T, check.names=F, row.names=1)
-  
+
   snps_location_file_name = snps_location_file_names[index]
   snpspos = read.table(snps_location_file_name, header = TRUE, stringsAsFactors = FALSE);
   
@@ -189,7 +216,7 @@ for(index in c(1:2)){
   genepos$cismin<-genepos$s1 - cisDist
   genepos$cismax<-genepos$s2 + cisDist
   
-  genesymbol<-genesymbols[3]
+  genesymbol<-genesymbols[1]
   for(genesymbol in genesymbols){
     expression_file_name_noext<-paste0(gene_expression_file_name_noext, ".", genesymbol)
     cat(expression_file_name_noext, "\n")  
@@ -216,7 +243,13 @@ for(index in c(1:2)){
     trans_snp = snp_data[trans_snp_pos$snp,]
     trans_result<-perform_eqtls(paste0(expression_file_name_noext, ".trans"), trans_snp_pos, trans_snp, ge_covariants)
     trans_eqtls=trans_result$kw_sig_eqtls
+
     drawpicture(snpbim, trans_eqtls, "trans", snp_data, gene_expression)
+    
+    kw_filter=trans_result$eqtls[trans_result$eqtls$fdr < 0.05,]
+    kw_filter=kw_filter[!(as.character(kw_filter$snp) %in% as.character(trans_result$kw_sig_eqtls$snp)),]
+
+    drawpicture(snpbim, kw_filter, "trans_kw_notpass", snp_data, gene_expression)
     
     allsnps<-rbind(cis_result$eqtls, trans_result$eqtls)
     #allsnps<-cis_result$eqtls
