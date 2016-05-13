@@ -68,7 +68,7 @@ drawpicture<-function(snpbim, filtered, name, snp_data, gene_data){
         levels<-c(levels, g2count)
       }
       
-      dat<-data.frame(GenoType=gt, GeneExpression=log2(ge))
+      dat<-data.frame(GenoType=gt, GeneExpression=ge)
       dat$GenoType<-factor(dat$GenoType, levels=levels)
       
       genename<-gsub("_", " ", curgene, perl=TRUE)
@@ -178,7 +178,7 @@ for(index in c(1:2)){
   
   gene_expression_file_name<-gene_expression_file_names[index]
   gene_expression_file_name_noext<-sub("[.][^.]*$", "", gene_expression_file_name, perl=TRUE)
-  gene_expression<-read.table(gene_expression_file_name, sep="\t", header=T, check.names = F, row.names=1)
+  gene_expression<-log2(read.table(gene_expression_file_name, sep="\t", header=T, check.names = F, row.names=1))
   genesymbols<-rownames(gene_expression)
   
   snp_genotype_file_name <-snp_genotype_file_names[index]

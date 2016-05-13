@@ -68,7 +68,7 @@ drawpicture<-function(snpbim, filtered, name, snp_data, gene_data){
         levels<-c(levels, g2count)
       }
       
-      dat<-data.frame(GenoType=gt, GeneExpression=log2(ge))
+      dat<-data.frame(GenoType=gt, GeneExpression=ge)
       dat$GenoType<-factor(dat$GenoType, levels=levels)
       
       genename<-gsub("_", " ", curgene, perl=TRUE)
@@ -90,30 +90,41 @@ drawpicture<-function(snpbim, filtered, name, snp_data, gene_data){
 ########################################################
 # mixed effects model - fy 5/5/2016
 do_eqtls<-function(snp_info, snp_genotypes, gene_covariants){
-  result=snp_info
-  result$pvalue=apply(snp_genotypes, 1, function(x){
+  pvalues=unlist(apply(snp_genotypes, 1, function(x){
     gene_covariants$GenoType=x
     #fit = lm( GenoType ~ GeneExpression + gender + family, data = gene_covariants )
     
     #print(gene_covariants$GenoType)
     
     dat<-gene_covariants[complete.cases(gene_covariants), ]
+    
+    td<-table(dat$GenoType)
+    td<-td[td >= 5]
+    
+    dat<-dat[dat$GenoType %in% names(td),]
+    
     fit<-lme(GeneExpression ~ factor(GenoType) + gender, random = ~1|family, data = dat)
     
     #print(anova(fit))
     
-    #Fstat<-anova(fit)[2,3] # overall F test statistic for genotype
     Fp<-anova(fit)[2,4]  # overall F test pvalue for genetype
-    
-    #F.pvalue<-pf(q=Fstat, df1=2, df2=10, lower.tail=FALSE)
     
     #print(summary(fit)) #$coefficients) #["GenoType",4]
     
-    #tp.1vs0<-summary(fit)$tTable[2,5]
-    #tp.2vs0<-summary(fit)$tTable[3,5]
-    
-    return(Fp)
-  })
+    st<-summary(fit)$tTable
+    tp1vs0<-st[2,5]
+    if(length(td) > 2){
+      tp2vs0<-st[3,5]
+    }else{
+      tp2vs0<-NA
+    }
+
+    return(c(Fp, tp1vs0, tp2vs0))
+  }))
+  
+  pvalues<-t(pvalues)
+  colnames(pvalues)=c("pvalue", "pvalue1vs0", "pvalue2vs0")
+  result=cbind(snp_info, pvalues)
   
   result$fdr=p.adjust(result$pvalue)
   result=result[order(result$pvalue),]
@@ -178,7 +189,7 @@ for(index in c(1:2)){
   
   gene_expression_file_name<-gene_expression_file_names[index]
   gene_expression_file_name_noext<-sub("[.][^.]*$", "", gene_expression_file_name, perl=TRUE)
-  gene_expression<-read.table(gene_expression_file_name, sep="\t", header=T, check.names = F, row.names=1)
+  gene_expression<-log2(read.table(gene_expression_file_name, sep="\t", header=T, check.names = F, row.names=1))
   genesymbols<-rownames(gene_expression)
   
   snp_genotype_file_name <-snp_genotype_file_names[index]
