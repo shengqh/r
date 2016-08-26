@@ -15,7 +15,7 @@ a<-aregImpute(~Age + Gender + BMI + NoPH + PVH + Combined + PAH, n.impute=20, nk
 
 fit.MI<-function(data, outcome, var){
   
-  f<-fit.mult.impute(outcome ~ Age + Gender + BMI + var, fitter=lrm, xtrans=a, data=data)
+  f<-fit.mult.impute(outcome ~ Age + Gender + BMI + var, fitter=lrm, xtrans=a, data=data, pr=F)
   
   #f<-lrm(outcome ~ d2$Age + d2$Gender + d2$BMI + var)
   #f<-glm(outcome ~ d2$Age + d2$Gender + d2$BMI + var, family=binomial(link='logit'))
@@ -56,9 +56,13 @@ comp<-function(data, outcome, filename){
   pvalue.adj<-p.adjust(pvalue, method="BH")
   res<-data.frame(proteome=colnames(data)[11:ncol(data)], coefficient, pvalue, pvalue.adj)
   res<-res[order(res$pvalue),]
-  print(res)
-
   write.csv(res, filename, row.names=F)
+  
+  res<-res[!is.na(res$coefficient),]
+
+  rnk<-data.frame(Protein=res$proteome, SignedPvalue=-log(res$pvalue) * sign(res$coefficient))
+  write.table(rnk, paste0(filename, ".rnk"), col.names = F, row.names=F, sep="\t", quote=F)
+  
 }
 
 comp(d4, d4$PVH_PAH, "proteomics_univariable_PVH_vs_PAH_with_imputation.csv")
