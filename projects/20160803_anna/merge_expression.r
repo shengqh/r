@@ -9,13 +9,11 @@ d0<-read.delim("proteomics_expression_data.txt", header=T, stringsAsFactors = F)
 d0<-d0[,c(3,12:ncol(d0))]
 d0$ID_<-gsub("\\s+","", d0$ID_)
 d0$ID_<-gsub("C15T0061212","C15-T0061212", d0$ID_)
-d1<-t(d0)
 
 file=files[1]
 for(file in files){
-  winner=read.csv(paste0(file, ".csv"))
-  winnerdata=d1[winner$X,]
-  merged=cbind(winner, winnerdata)
-  colnames(merged)=c("protein", "multivariable_value", d1["ID_",])
-  write.csv(file=paste0(file,".expression.csv"), merged, row.names=F)
+  winner=read.csv(paste0(file, ".csv"), header=T, stringsAsFactors = F)
+  winnerdata=d0[, c("ID_", winner$X)]
+  colnames(winnerdata)[1] = "Sample"
+  write.csv(file=paste0(file,".expression.csv"), winnerdata, row.names=F)
 }
