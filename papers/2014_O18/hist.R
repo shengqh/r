@@ -1,7 +1,0 @@
-setwd("H:/shengquanhu/projects/rcpa/O18/paperdata/summary")
-data<-read.table("1_1.ProO18Quant", header=T, row.names=1, sep="\t")
-hist(log(data$O18_RATIO), breaks=40, main="1:1")
-data<-read.table("1_2.ProO18Quant", header=T, row.names=1, sep="\t")
-hist(log(data$O18_RATIO), breaks=40, main="2:1")
-data<-read.table("2_1.ProO18Quant", header=T, row.names=1, sep="\t")
-hist(log(data$O18_RATIO), breaks=40, main="1:2")

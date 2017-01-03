@@ -1,5 +1,0 @@
-install.packages("seewave")
-library(seewave)
-p0<-c(0.3,0.4,0.3)
-p1<-c(0.3,0.4,0.3)
-kl.dist(p0,p1)
